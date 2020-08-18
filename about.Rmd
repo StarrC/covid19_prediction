@@ -1,4 +1,0 @@
----
-title: "About"
----
-This website is a COVID-19 prediction project by Starr Corbin
