@@ -5,9 +5,14 @@ navbar:
   left:
     - text: "Home"
       href: index.html
-    - text: "COVID-19 Prediction"
-      href: covid-19-prediction.html
+    - text: "COVID-19 Peak Cases"
+      href: peak.html
+    - text: "COVID-19 Deaths Model"
+      href: deaths.html
+    - text: "COVID-19 Cases Model"
+      href: cases.html
 output:
   html_document:
+
 
 

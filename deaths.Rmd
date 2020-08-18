@@ -1,0 +1,283 @@
+---
+title: "COVID-19 Deaths Model"
+output:
+  html_document:
+    df_print: paged
+---
+
+##Load the R Libraries
+```{r}
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(readr)
+library(zoo)
+library(scales)
+library(sf)
+library(urbnmapr)
+library(plotly)
+library(tidyverse)
+library(mlbench)
+library(caret)
+```
+
+#Merge census data with JHU data
+```{r}
+usfacts_data <- read.csv("census_data_0718.csv")
+cases <- counties_sf
+pop_density <- read.csv("USA_Population_Density.csv")
+names(cases)[7] <- "county_fips_code"
+cases_new <- merge(usfacts_data, cases, by="county_fips_code")
+dim(cases_new)
+cases_new <- merge(cases_new, pop_density, by="county_fips_code")
+#Make characters factor for analysis
+cases_new <- cases_new %>% mutate_if(is.character, factor)
+dim(cases_new)
+```
+
+#Select Variables
+```{r}
+deaths_sel <- cases_new %>% select(county_name.x, state, total_pop, pop_density,        
+  male_pop, female_pop, median_age, white_pop, 
+  black_pop, asian_pop, hispanic_pop, amerindian_pop,
+  commuters_by_public_transportation, median_income, 
+  employed_pop, unemployed_pop, deaths_category)
+
+summary(deaths_sel)
+
+```
+
+#Normalize by population
+```{r}
+deaths_sel <- deaths_sel %>% mutate(
+  female_pop = female_pop / total_pop,
+  male_pop = male_pop / total_pop,
+  white_pop = white_pop / total_pop, 
+  black_pop = black_pop / total_pop, 
+  asian_pop = asian_pop / total_pop, 
+  hispanic_pop = hispanic_pop / total_pop, 
+  amerindian_pop = amerindian_pop / total_pop,
+  commuters_by_public_transportation = commuters_by_public_transportation/ total_pop, 
+  employed_pop = employed_pop / total_pop, 
+  unemployed_pop = unemployed_pop / total_pop, 
+  )
+
+summary(deaths_sel)
+```
+```{r}
+table(complete.cases(deaths_sel))
+```
+
+
+##Focus on states with Covid-19 outbreaks
+```{r}
+deaths_sel %>% pull(deaths_category) %>% table()
+```
+
+
+## Filter Hard Hit States - Cases
+```{r}
+deaths_sel %>% group_by(state) %>% 
+  summarize(high_pct = sum(deaths_category == "High")/n()) %>%
+  arrange(desc(high_pct))
+```
+
+## Designate States to use for Training model
+```{r}
+deaths_train <- deaths_sel %>% filter(
+  state == "NY" |
+    state == "CA" |
+    state == "FL")
+
+deaths_train %>% pull(deaths_category) %>% table()
+
+```
+
+## Plot Map
+```{r}
+counties_deaths <- as_tibble(map_data("county"))
+counties_deaths <- counties_deaths %>% 
+  rename(c(county = subregion, state = region)) %>%
+  mutate(state = state.abb[match(state, tolower(state.name))]) %>%
+  select(state, county, long, lat, group)
+counties_deaths
+```
+
+##Add Variables to Map Data
+```{r}
+deaths_all <- counties_deaths %>% left_join(deaths_train %>% 
+    mutate(county = county_name.x %>% str_to_lower() %>% 
+        str_replace('\\s+county\\s*$', '')))
+```
+
+```{r}
+ggplot(deaths_all, aes(long, lat)) + 
+  geom_polygon(aes(group = group, fill = deaths_category)) + 
+    coord_quickmap() 
+```
+
+## Check Variable Importance
+```{r}
+library(FSelector)
+deaths_weight <- deaths_train %>% select(-county_name.x, -state, - total_pop)
+deaths_weight <- deaths_weight %>% chi.squared(deaths_category ~ ., data = .) %>%
+  as_tibble(rownames = "feature") %>%
+  arrange(desc(attr_importance))
+deaths_weight
+
+
+```
+```{r}
+ggplot(deaths_weight,
+  aes(x = attr_importance, y = reorder(feature, attr_importance))) +
+  geom_bar(stat = "identity") +
+  xlab("Importance score") + ylab("Feature")
+```
+
+
+#Get the 5 best features: 
+```{r}
+subset_tx <- cutoff.k(deaths_weight %>% column_to_rownames("feature"), 5)
+subset_tx
+```
+#Univariate importance scores
+
+```{r}
+library(rpart)
+library(rpart.plot)
+#deaths_tx_new <- deaths_tx %>% select(-county_name.x, - total_pop, -state)
+deaths_train %>% gain.ratio(deaths_category ~ ., data = .) %>%
+  as_tibble(rownames = "feature") %>%
+  arrange(desc(attr_importance))
+```
+
+
+## Build a Model
+```{r}
+library(caret)
+fit_deaths <- deaths_train %>%
+  train(deaths_category ~. - county_name.x - state - total_pop,
+    data = . ,
+    method = "rpart",
+    #method = "rf",
+    #method = "nb",
+    trControl = trainControl(method = "cv", number = 10),
+    tuneLength = 5)
+fit_deaths
+```
+
+
+```{r}
+library(rpart.plot)
+rpart.plot(fit_deaths$finalModel, extra = 2)
+varImp(fit_deaths)
+```
+##Build a Model - C.45
+```{r}
+C45fit_deaths <- deaths_train %>%
+train(deaths_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "J48",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+C45fit_deaths
+```
+
+
+```{r}
+C45fit_deaths$finalModel
+```
+
+## Build a Model - Conditional Inference Tree
+```{r}
+ctreeFit_deaths <- deaths_train %>%
+train(deaths_category ~ . - county_name.x - state - total_pop, 
+    data = . ,
+    method = "ctree",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+ctreeFit_deaths
+```
+
+
+```{r}
+plot(ctreeFit_deaths$finalModel)
+```
+
+```{r}
+predict(ctreeFit_deaths, head(cases_train))
+```
+
+##Build a Model - PART
+#Remove county name since it has too many levels which will make the code really slow
+```{r}
+rulesfit_deaths <- deaths_train %>%
+train(deaths_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "PART",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+rulesfit_deaths
+```
+
+```{r}
+rulesfit_deaths$finalModel
+```
+
+## Build a Model - Random Forest Fit
+```{r}
+randomForestFit_deaths <- deaths_train %>% 
+  train(deaths_category ~ .  - county_name.x - state - total_pop,
+    data = . ,
+    method = "rf",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+randomForestFit_deaths
+```
+
+
+```{r}
+randomForestFit_deaths$finalModel
+```
+
+
+## Artificial Neural Network
+```{r}
+nnetFit_deaths <- deaths_train %>% train(deaths_category ~ . - county_name.x - state - total_pop,
+  method = "nnet",
+  data = .,
+    tuneLength = 5,
+    trControl = trainControl(method = "cv", number = 10),
+  trace = FALSE)
+nnetFit_deaths
+```
+
+## Compare Models
+```{r}
+resamps <- resamples(list(
+  decision = fit_deaths ,
+  ctree = ctreeFit_deaths,
+  rules = rulesfit_deaths,
+  randomForest = randomForestFit_deaths,
+  NeuralNet = nnetFit_deaths, 
+  C45fit = C45fit_deaths
+    ))
+resamps
+summary(resamps)
+```
+
+## Use model from hard hit states for all of US
+```{r}
+deaths_pred <- na.omit(deaths_sel)
+deaths_pred$deaths_category <- predict(randomForestFit_deaths, deaths_pred)
+deaths_pred <- counties_deaths %>% left_join(deaths_pred %>% 
+    mutate(county = county_name.x %>% str_to_lower() %>% 
+        str_replace('\\s+county\\s*$', '')))
+```
+
+```{r}
+ggplot(deaths_pred, aes(long, lat)) + 
+  geom_polygon(aes(group = group, fill = deaths_category)) + 
+    coord_quickmap()
+```
