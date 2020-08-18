@@ -1,0 +1,282 @@
+---
+title: "COVID-19 Cases Model"
+author: "Starr Corbin"
+date: "7/24/2020"
+output:
+  html_document: default
+  word_document: default
+---
+```{r}
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(readr)
+library(zoo)
+library(scales)
+library(sf)
+library(urbnmapr)
+library(plotly)
+library(tidyverse)
+library(mlbench)
+library(caret)
+```
+
+
+#Merge census data with JHU data
+```{r}
+usfacts_data <- read.csv("census_data_0718.csv")
+cases <- counties_sf
+pop_density <- read.csv("USA_Population_Density.csv")
+names(cases)[7] <- "county_fips_code"
+cases_new <- merge(usfacts_data, cases, by="county_fips_code")
+dim(cases_new)
+cases_new <- merge(cases_new, pop_density, by="county_fips_code")
+#Make characters factor for analysis
+cases_new <- cases_new %>% mutate_if(is.character, factor)
+dim(cases_new)
+```
+ 
+#Select Variables
+```{r}
+cases_sel <- cases_new %>% select(county_name.x, state,total_pop, pop_density,       
+  male_pop, female_pop, median_age, white_pop, 
+  black_pop, asian_pop, hispanic_pop, amerindian_pop,
+  commuters_by_public_transportation, median_income, 
+  employed_pop, unemployed_pop, cases_category)
+
+summary(cases_sel)
+
+```
+
+```{r}
+table(complete.cases(cases_sel))
+```
+
+#Normalize by population
+```{r}
+cases_sel <- cases_sel %>% mutate(
+  female_pop = female_pop / total_pop,
+  male_pop = male_pop / total_pop,
+  white_pop = white_pop / total_pop, 
+  black_pop = black_pop / total_pop, 
+  asian_pop = asian_pop / total_pop, 
+  hispanic_pop = hispanic_pop / total_pop, 
+  amerindian_pop = amerindian_pop / total_pop,
+  commuters_by_public_transportation = commuters_by_public_transportation/ total_pop, 
+  employed_pop = employed_pop / total_pop, 
+  unemployed_pop = unemployed_pop / total_pop, 
+  )
+
+summary(cases_sel)
+```
+
+##Focus on states with Covid-19 outbreaks
+```{r}
+cases_sel %>% pull(cases_category) %>% table()
+```
+## Filter Hard Hit States - Cases
+```{r}
+cases_sel %>% group_by(state) %>% 
+  summarize(high_pct = sum(cases_category == "High")/n()) %>%
+  arrange(desc(high_pct))
+```
+
+## Designate States to use for Training model
+```{r}
+cases_train <- cases_sel %>% filter(
+    state == "NY" |
+    state == "CA" |
+    state == "SC" 
+  )
+
+cases_train %>% pull(cases_category) %>% table()
+
+```
+
+## Plot Map
+```{r}
+counties <- as_tibble(map_data("county"))
+counties <- counties %>% 
+  rename(c(county = subregion, state = region)) %>%
+  mutate(state = state.abb[match(state, tolower(state.name))]) %>%
+  select(state, county, long, lat, group)
+counties  
+```
+
+##Add Variables to Map Data
+```{r}
+counties_all <- counties %>% left_join(cases_train %>% 
+    mutate(county = county_name.x %>% str_to_lower() %>% 
+        str_replace('\\s+county\\s*$', '')))
+```
+
+```{r}
+ggplot(counties_all, aes(long, lat)) + 
+  geom_polygon(aes(group = group, fill = cases_category)) + 
+    coord_quickmap() 
+```
+
+## Check Variable Importance
+```{r}
+library(FSelector)
+cases_weight <- cases_train %>% select(-county_name.x, -state, - total_pop)
+cases_weight <- cases_weight %>% chi.squared(cases_category ~ ., data = .) %>%
+  as_tibble(rownames = "feature") %>%
+  arrange(desc(attr_importance))
+cases_weight
+```
+
+#Plot the importance in descending order
+```{r}
+ggplot(cases_weight,
+  aes(x = attr_importance, y = reorder(feature, attr_importance))) +
+  geom_bar(stat = "identity") +
+  xlab("Importance score") + ylab("Feature")
+
+```
+
+#Get the 5 best features: 
+```{r}
+subset_tx <- cutoff.k(cases_weight %>% column_to_rownames("feature"), 5)
+subset_tx
+```
+#Univariate importance scores
+
+```{r}
+library(rpart)
+library(rpart.plot)
+#deaths_tx_new <- deaths_tx %>% select(-county_name.x, - total_pop, -state)
+cases_train %>% gain.ratio(cases_category ~ ., data = .) %>%
+  as_tibble(rownames = "feature") %>%
+  arrange(desc(attr_importance))
+```
+
+
+## Build a Model - Decision Tree
+```{r}
+library(caret)
+fit_cases <- cases_train %>%
+  train(cases_category ~ . - county_name.x - state - total_pop, 
+    data = . ,
+    method = "rpart",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+```
+```{r}
+fit_cases
+```
+```{r}
+library(rpart.plot)
+rpart.plot(fit_cases$finalModel, extra = 2)
+varImp(fit_cases)
+```
+
+
+## Build a Model - Conditional Inference Tree
+```{r}
+ctreeFit_cases <- cases_train %>%
+train(cases_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "ctree",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+ctreeFit_cases
+```
+
+```{r}
+plot(ctreeFit_cases$finalModel)
+```
+
+```{r}
+predict(ctreeFit_cases, head(cases_train))
+```
+##Build a Model - C.45
+```{r}
+C45fit_cases <- cases_train %>%
+train(cases_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "J48",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+C45fit_cases
+```
+```{r}
+C45fit_cases$finalModel
+```
+
+
+##Build a Model - PART
+```{r}
+#Remove county name since it has too many levels which will make the code really slow
+rulesfit_cases <- cases_train %>%
+train(cases_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "PART",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+rulesfit_cases
+```
+
+```{r}
+rulesfit_cases$finalModel
+```
+## Build a Model - Random Forest Fit
+```{r}
+randomForestFit_cases <- cases_train %>% 
+  train(cases_category ~ . - county_name.x - state - total_pop,
+    data = . ,
+    method = "rf",
+    trControl = trainControl(method = "cv", number = 10)
+    )
+randomForestFit_cases
+```
+
+
+## Artificial Neural Network
+```{r}
+nnetFit_case <- cases_train %>% train(cases_category ~ . - county_name.x - state - total_pop,
+  method = "nnet",
+  data = .,
+    tuneLength = 5,
+    trControl = trainControl(method = "cv", number = 10),
+  trace = FALSE)
+nnetFit_case
+```
+```{r}
+nnetFit_case$finalModel
+```
+
+## Compare Models
+```{r}
+resamps <- resamples(list(
+  decision = fit,
+  ctree = ctreeFit_cases,
+  rules = rulesfit_cases,
+  randomForest = randomForestFit_cases,
+  NeuralNet = nnetFit_case, 
+  C45fit = C45fit_cases
+    ))
+resamps
+summary(resamps)
+```
+
+
+## Use model from hard hit states for all of US
+```{r}
+cases_pred <- na.omit(cases_sel)
+cases_pred$cases_category <- predict(randomForestFit_cases, cases_pred)
+counties_pred <- counties %>% left_join(cases_pred %>% 
+    mutate(county = county_name.x %>% str_to_lower() %>% 
+        str_replace('\\s+county\\s*$', '')))
+```
+
+```{r}
+ggplot(counties_pred, aes(long, lat)) + 
+  geom_polygon(aes(group = group, fill = cases_category)) + 
+    coord_quickmap()
+```
+```{r}
+write.csv(cases_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/School/SMU/Data Mining/Project 3/case_predictor_rules.csv")
+```
+
