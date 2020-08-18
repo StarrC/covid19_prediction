@@ -1,12 +1,13 @@
-name: "my-website"
+name: "Starr Corbin"
+output_dir: "docs"
 navbar:
-  title: "My Website"
+  title: "Starr Corbin Projects"
   left:
     - text: "Home"
       href: index.html
-    - text: "About"
-      href: about.html
+    - text: "COVID-19 Prediction"
+      href: covid-19-prediction.html
 output:
   html_document:
     theme: cosmo
-    highlight: textmate
+

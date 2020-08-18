@@ -1,4 +1,4 @@
 ---
-title: "COVID-19 Predictions Model"
+title: "Starr Corbin"
 ---
-COVID-19 Prediction Model for U.S. Counties
+Starr Corbin's ML and Data Science Projects
