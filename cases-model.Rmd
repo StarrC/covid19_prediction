@@ -250,7 +250,7 @@ nnetFit_case$finalModel
 ## Compare Models
 ```{r}
 resamps <- resamples(list(
-  decision = fit,
+  decision = fit_cases,
   ctree = ctreeFit_cases,
   rules = rulesfit_cases,
   randomForest = randomForestFit_cases,
