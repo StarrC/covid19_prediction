@@ -1,0 +1,4 @@
+---
+title: "COVID-19 Predictions Model"
+---
+COVID-19 Prediction Model for U.S. Counties
