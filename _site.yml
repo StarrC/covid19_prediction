@@ -9,5 +9,5 @@ navbar:
       href: covid-19-prediction.html
 output:
   html_document:
-    theme: cosmo
+
 
