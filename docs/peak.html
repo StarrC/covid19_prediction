@@ -300,7 +300,8 @@ $(document).ready(function () {
 </div>
 
 
-<p>##Load the R Libraries</p>
+<div id="load-the-r-libraries" class="section level2">
+<h2>Load the R Libraries</h2>
 <pre class="r"><code>library(tidyr)
 library(dplyr)
 library(stringr)
@@ -314,7 +315,9 @@ library(tidyverse)
 library(mlbench)
 library(caret)
 library(zoo)</code></pre>
-<p>##Pull the latest COVID-19 Data and Census Data</p>
+</div>
+<div id="pull-the-latest-covid-19-data-and-census-data" class="section level2">
+<h2>Pull the latest COVID-19 Data and Census Data</h2>
 <pre class="r"><code>jhu_url &lt;- paste(&quot;https://raw.githubusercontent.com/CSSEGISandData/&quot;,
                  &quot;COVID-19/master/csse_covid_19_data/&quot;, &quot;csse_covid_19_time_series/&quot;,
                  &quot;time_series_covid19_confirmed_US.csv&quot;, sep = &quot;&quot;)
@@ -325,7 +328,9 @@ jhu_deaths &lt;- paste(&quot;https://raw.githubusercontent.com/CSSEGISandData/&q
 
 census_url &lt;- paste(&quot;https://www2.census.gov/programs-surveys/popest/&quot;,
                     &quot;datasets/2010-2019/counties/totals/co-est2019-alldata.csv&quot;,sep = &quot;&quot;)</code></pre>
-<p>##Read in the COVID Data</p>
+</div>
+<div id="read-in-the-covid-data" class="section level2">
+<h2>Read in the COVID Data</h2>
 <pre class="r"><code>covidData &lt;-
   read_csv(jhu_url) %&gt;%
   rename(province = &quot;Province_State&quot;,
@@ -357,8 +362,10 @@ census_url &lt;- paste(&quot;https://www2.census.gov/programs-surveys/popest/&qu
 ##   Combined_Key = col_character()
 ## )</code></pre>
 <pre><code>## See spec(...) for full column specifications.</code></pre>
-<pre class="r"><code>#Read in the COVID death data
-covidDeath &lt;-
+</div>
+<div id="read-in-the-covid-death-data" class="section level2">
+<h2>Read in the COVID death data</h2>
+<pre class="r"><code>covidDeath &lt;-
   read_csv(jhu_deaths) %&gt;%
   rename(province = &quot;Province_State&quot;,
          country_region = &quot;Country_Region&quot;,
@@ -396,7 +403,9 @@ covidDeath &lt;-
             na_matches=&quot;never&quot;)
 
 rm(covidDeath)</code></pre>
-<p>##Read in the Population Data and Combine with COVID-19 Data</p>
+</div>
+<div id="read-in-the-population-data-and-combine-with-covid-19-data" class="section level2">
+<h2>Read in the Population Data and Combine with COVID-19 Data</h2>
 <pre class="r"><code>co_est2019_alldata =
   read_csv(census_url) %&gt;%
   select(STATE,COUNTY,POPESTIMATE2019) %&gt;%
@@ -417,7 +426,9 @@ covidData =
   covidData %&gt;%
   left_join(select(co_est2019_alldata,FIPS,population),by=&quot;FIPS&quot;) %&gt;%
   filter(!is.na(population))</code></pre>
-<p>##Calculate 7 Day Rolling Averages</p>
+</div>
+<div id="calculate-7-day-rolling-averages" class="section level2">
+<h2>Calculate 7 Day Rolling Averages</h2>
 <pre class="r"><code>dCovid = covidData %&gt;%
   mutate(ncap=new_cases/population*1e5) %&gt;%
   mutate(dcap=new_deaths/population*1e5) %&gt;%
@@ -428,22 +439,38 @@ covidData =
   mutate(rdcap=rollmean(dcap,7,fill=NA,align=&quot;right&quot;)) %&gt;%
   ungroup()</code></pre>
 <pre class="r"><code>summary(dCovid)</code></pre>
-<pre><code>##        d                 county            province              FIPS       cumulative_cases     new_cases       
-##  Min.   :2020-01-22   Length:656678      Length:656678      Min.   : 1001   Min.   :     0.0   Min.   :-621.000  
-##  1st Qu.:2020-03-14   Class :character   Class :character   1st Qu.:18177   1st Qu.:     0.0   1st Qu.:   0.000  
-##  Median :2020-05-05   Mode  :character   Mode  :character   Median :29176   Median :     9.0   Median :   0.000  
-##  Mean   :2020-05-05                                         Mean   :30384   Mean   :   492.5   Mean   :   8.181  
-##  3rd Qu.:2020-06-26                                         3rd Qu.:45081   3rd Qu.:   103.0   3rd Qu.:   2.000  
-##  Max.   :2020-08-17                                         Max.   :56045   Max.   :230458.0   Max.   :7837.000  
-##                                                                                                NA&#39;s   :3142      
-##  cumulative_deaths    new_deaths        population            ncap                dcap                rnew         
-##  Min.   :    0.00   Min.   :-54.000   Min.   :      86   Min.   :-2024.291   Min.   :-166.7709   Min.   : -70.143  
-##  1st Qu.:    0.00   1st Qu.:  0.000   1st Qu.:   10901   1st Qu.:    0.000   1st Qu.:   0.0000   1st Qu.:   0.000  
-##  Median :    0.00   Median :  0.000   Median :   25726   Median :    0.000   Median :   0.0000   Median :   0.286  
-##  Mean   :   21.63   Mean   :  0.257   Mean   :  104468   Mean   :    5.862   Mean   :   0.1384   Mean   :   8.213  
-##  3rd Qu.:    2.00   3rd Qu.:  0.000   3rd Qu.:   68098   3rd Qu.:    4.506   3rd Qu.:   0.0000   3rd Qu.:   2.286  
-##  Max.   :23634.00   Max.   :814.000   Max.   :10039107   Max.   : 7949.309   Max.   : 247.5248   Max.   :5214.143  
-##                     NA&#39;s   :3142                         NA&#39;s   :3142        NA&#39;s   :3142        NA&#39;s   :21994     
+<pre><code>##        d                 county            province        
+##  Min.   :2020-01-22   Length:656678      Length:656678     
+##  1st Qu.:2020-03-14   Class :character   Class :character  
+##  Median :2020-05-05   Mode  :character   Mode  :character  
+##  Mean   :2020-05-05                                        
+##  3rd Qu.:2020-06-26                                        
+##  Max.   :2020-08-17                                        
+##                                                            
+##       FIPS       cumulative_cases     new_cases       
+##  Min.   : 1001   Min.   :     0.0   Min.   :-621.000  
+##  1st Qu.:18177   1st Qu.:     0.0   1st Qu.:   0.000  
+##  Median :29176   Median :     9.0   Median :   0.000  
+##  Mean   :30384   Mean   :   492.5   Mean   :   8.181  
+##  3rd Qu.:45081   3rd Qu.:   103.0   3rd Qu.:   2.000  
+##  Max.   :56045   Max.   :230458.0   Max.   :7837.000  
+##                                     NA&#39;s   :3142      
+##  cumulative_deaths    new_deaths        population      
+##  Min.   :    0.00   Min.   :-54.000   Min.   :      86  
+##  1st Qu.:    0.00   1st Qu.:  0.000   1st Qu.:   10901  
+##  Median :    0.00   Median :  0.000   Median :   25726  
+##  Mean   :   21.63   Mean   :  0.257   Mean   :  104468  
+##  3rd Qu.:    2.00   3rd Qu.:  0.000   3rd Qu.:   68098  
+##  Max.   :23634.00   Max.   :814.000   Max.   :10039107  
+##                     NA&#39;s   :3142                        
+##       ncap                dcap                rnew         
+##  Min.   :-2024.291   Min.   :-166.7709   Min.   : -70.143  
+##  1st Qu.:    0.000   1st Qu.:   0.0000   1st Qu.:   0.000  
+##  Median :    0.000   Median :   0.0000   Median :   0.286  
+##  Mean   :    5.862   Mean   :   0.1384   Mean   :   8.213  
+##  3rd Qu.:    4.506   3rd Qu.:   0.0000   3rd Qu.:   2.286  
+##  Max.   : 7949.309   Max.   : 247.5248   Max.   :5214.143  
+##  NA&#39;s   :3142        NA&#39;s   :3142        NA&#39;s   :21994     
 ##      rdnew             rncap              rdcap        
 ##  Min.   : -2.857   Min.   :-299.316   Min.   :-23.824  
 ##  1st Qu.:  0.000   1st Qu.:   0.000   1st Qu.:  0.000  
@@ -452,7 +479,9 @@ covidData =
 ##  3rd Qu.:  0.000   3rd Qu.:   5.827   3rd Qu.:  0.000  
 ##  Max.   :760.143   Max.   :1648.352   Max.   : 46.672  
 ##  NA&#39;s   :21994     NA&#39;s   :21994      NA&#39;s   :21994</code></pre>
-<p>#Extract the peak value occurred in the rolling average of new cases</p>
+</div>
+<div id="extract-the-peak-value-occurred-in-the-rolling-average-of-new-cases" class="section level2">
+<h2>Extract the peak value occurred in the rolling average of new cases</h2>
 <pre class="r"><code>dCovid =
   dCovid %&gt;%
   group_by(FIPS) %&gt;%
@@ -462,23 +491,31 @@ covidData =
          dateMax_rdnew =d[which.max(rdnew)],
          daySince = as.numeric(d - dateMax),
          daySince_rdnew = as.numeric(d - dateMax_rdnew))</code></pre>
-<p>##Take data corresponding to the latest date in the COIVD database.</p>
+</div>
+<div id="take-data-corresponding-to-the-latest-date-in-the-coivd-database." class="section level2">
+<h2>Take data corresponding to the latest date in the COIVD database.</h2>
 <pre class="r"><code>dNow = max(dCovid$d)
 ddCovid=dCovid %&gt;%
   filter(d==dNow)</code></pre>
-<p>##Read in and parse the county shapefile.</p>
+</div>
+<div id="read-in-and-parse-the-county-shapefile." class="section level2">
+<h2>Read in and parse the county shapefile.</h2>
 <pre class="r"><code>counties_sf =
   get_urbn_map(&quot;counties&quot;, sf = TRUE) %&gt;%
   mutate(FIPS=as.numeric(county_fips)) %&gt;%
   left_join(ddCovid,by=&quot;FIPS&quot;)</code></pre>
-<p>###Combine county shape files into state features for plotting</p>
+</div>
+<div id="combine-county-shape-files-into-state-features-for-plotting" class="section level2">
+<h2>Combine county shape files into state features for plotting</h2>
 <pre class="r"><code>states &lt;-
   counties_sf %&gt;%
   group_by(province) %&gt;%
   summarise(do_union = TRUE) %&gt;%
   st_cast()</code></pre>
 <pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<p>##Create the plot: Time since X</p>
+</div>
+<div id="create-the-plot-time-since-x" class="section level2">
+<h2>Create the plot: Time since X</h2>
 <pre class="r"><code>pday_cases=counties_sf %&gt;%
   ggplot() +
   geom_sf(aes(fill=daySince),size=0.1) +
@@ -495,8 +532,10 @@ ddCovid=dCovid %&gt;%
 
 print(pday_cases) </code></pre>
 <p><img src="peak_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<pre class="r"><code>#Create the plot
-pday_deaths=counties_sf %&gt;%
+</div>
+<div id="create-the-plot" class="section level2">
+<h2>Create the plot</h2>
+<pre class="r"><code>pday_deaths=counties_sf %&gt;%
   ggplot() +
   geom_sf(aes(fill=daySince_rdnew),size=0.1) +
   geom_sf(data=states,fill=NA,size=0.5) +
@@ -512,11 +551,16 @@ pday_deaths=counties_sf %&gt;%
 
 print(pday_deaths)</code></pre>
 <p><img src="peak_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
-<p>#Categorize days since last case into Low, Med, or High</p>
+</div>
+<div id="categorize-days-since-last-case-into-low-med-or-high" class="section level2">
+<h2>Categorize days since last case into Low, Med, or High</h2>
 <pre class="r"><code>counties_sf$cases_category &lt;- cut(counties_sf$daySince, breaks=c(-Inf, 30, 60, Inf), labels = c(&quot;High&quot;, &quot;Med&quot;, &quot;Low&quot;))</code></pre>
-<p>##Categorize days since last death into Low, Med, or High</p>
+</div>
+<div id="categorize-days-since-last-death-into-low-med-or-high" class="section level2">
+<h2>Categorize days since last death into Low, Med, or High</h2>
 <pre class="r"><code>counties_sf$deaths_category &lt;- cut(counties_sf$daySince_rdnew, breaks=c(-Inf, 30, 60, Inf), labels = c(&quot;High&quot;, &quot;Med&quot;, &quot;Low&quot;))
 deaths_category &lt;- cut(counties_sf$daySince_rdnew, breaks=c(-Inf, 30, 60, Inf), labels = c(&quot;High&quot;, &quot;Med&quot;, &quot;Low&quot;))</code></pre>
+</div>
 
 
 
