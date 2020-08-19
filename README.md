@@ -1,5 +1,5 @@
 # COVID-19 Prediction Model by U.S. County: High, Medium or Low Risk (as of August 18th, 2020)
-The goal of this project was to create a prediction model that could predict a county's risk for COVID-19 cases and deaths based on it's most recent peak value of COVID-19 cases and deaths. 
+The goal of this project was to create a model that could predict a county's risk for COVID-19 cases and deaths based on and assessment of county variables and the county's most recent peak value of COVID-19 cases and deaths. 
 
 Data classification based on assigned label of "High", "Medium" or "Low" risk. 
 
@@ -10,11 +10,11 @@ Variables included:
 - Commuters by Public Transportation
 - Social Distancing Scores
 
-# Sources of Data
-- Johns Hopkins University - latest numbers for COVID-19 deaths and cases
-- US Census 
-- Unacast - Social Distancing score cards
-- ARCGis - Population density information
+# Data Sources
+- Johns Hopkins University - latest numbers for COVID-19 deaths and cases: https://github.com/CSSEGISandData/COVID-19
+- US Census:https://console.cloud.google.com/marketplace/product/united-states-census-bureau/us-census-data?project=data-mining-project-280712 
+- Unacast - Social Distancing score cards: https://www.unacast.com/covid19/social-distancing-scoreboard
+- ARCGis - Population density information: https://hub.arcgis.com/datasets/fab7849b55d54f0f8f246605f6ee9306
 
 # Results and R Code
 Visual analysis and R code are detailed in this webpage: https://starrc.github.io/covid19_prediction/
@@ -31,7 +31,8 @@ Visual analysis and R code are detailed in this webpage: https://starrc.github.i
 
 # Model Instructions and Requirements
 1. Run peak.Rmd file
-   - Prediction results require peak cases to be determined and labeled accordingly (High, Medium, Low)
+   - Prediction results require peak cases by county to be determined. 
+   - Labels of "High", "Medium" and "Low" risk are then assigned to each county based on timeframe of when the peak value occurred 
 2. Run cases.Rmd file to generate prediction model results and csv for case predictions by county
 3. Run deaths.Rmd file to generate prediction model results and csv for deaths predictions by county
 4. RStudio
