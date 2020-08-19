@@ -2,7 +2,7 @@
 title: "Peak Cases and Deaths Classification Mapping"
 ---
 
-##Load the R Libraries
+## Load the R Libraries
 ```{r}
 library(tidyr)
 library(dplyr)
@@ -20,7 +20,7 @@ library(zoo)
 
 ```
 
-##Pull the latest COVID-19 Data and Census Data
+## Pull the latest COVID-19 Data and Census Data
 ```{r}
 jhu_url <- paste("https://raw.githubusercontent.com/CSSEGISandData/",
                  "COVID-19/master/csse_covid_19_data/", "csse_covid_19_time_series/",
@@ -34,7 +34,7 @@ census_url <- paste("https://www2.census.gov/programs-surveys/popest/",
                     "datasets/2010-2019/counties/totals/co-est2019-alldata.csv",sep = "")
 ```
 
-##Read in the COVID Data
+## Read in the COVID Data
 ```{r}
 covidData <-
   read_csv(jhu_url) %>%
@@ -57,8 +57,10 @@ covidData <-
   ungroup() %>%
   filter(!is.na(FIPS))
 ```
+
+## Read in the COVID death data
 ```{r}
-#Read in the COVID death data
+
 covidDeath <-
   read_csv(jhu_deaths) %>%
   rename(province = "Province_State",
@@ -90,7 +92,7 @@ covidData <-
 rm(covidDeath)
 ```
 
-##Read in the Population Data and Combine with COVID-19 Data
+## Read in the Population Data and Combine with COVID-19 Data
 ```{r}
 co_est2019_alldata =
   read_csv(census_url) %>%
@@ -105,7 +107,7 @@ covidData =
   filter(!is.na(population))
 ```
 
-##Calculate 7 Day Rolling Averages
+## Calculate 7 Day Rolling Averages
 ```{r}
 dCovid = covidData %>%
   mutate(ncap=new_cases/population*1e5) %>%
@@ -121,7 +123,7 @@ dCovid = covidData %>%
 summary(dCovid)
 ```
 
-#Extract the peak value occurred in the rolling average of new cases
+## Extract the peak value occurred in the rolling average of new cases
 ```{r}
 dCovid =
   dCovid %>%
@@ -134,14 +136,14 @@ dCovid =
          daySince_rdnew = as.numeric(d - dateMax_rdnew))
 ```
 
-##Take data corresponding to the latest date in the COIVD database.
+## Take data corresponding to the latest date in the COIVD database.
 ```{r}
 dNow = max(dCovid$d)
 ddCovid=dCovid %>%
   filter(d==dNow)
 ```
 
-##Read in and parse the county shapefile.
+## Read in and parse the county shapefile.
 ```{r}
 counties_sf =
   get_urbn_map("counties", sf = TRUE) %>%
@@ -150,7 +152,7 @@ counties_sf =
 
 ```
 
-###Combine county shape files into state features for plotting
+## Combine county shape files into state features for plotting
 ```{r}
 states <-
   counties_sf %>%
@@ -159,7 +161,7 @@ states <-
   st_cast()
 ```
 
-##Create the plot: Time since X
+## Create the plot: Time since X
 ```{r}
 pday_cases=counties_sf %>%
   ggplot() +
@@ -177,8 +179,10 @@ pday_cases=counties_sf %>%
 
 print(pday_cases) 
 ```
+
+## Create the plot
+
 ```{r}
-#Create the plot
 pday_deaths=counties_sf %>%
   ggplot() +
   geom_sf(aes(fill=daySince_rdnew),size=0.1) +
@@ -196,12 +200,12 @@ pday_deaths=counties_sf %>%
 print(pday_deaths)
 ```
 
-#Categorize days since last case into Low, Med, or High
+## Categorize days since last case into Low, Med, or High
 ```{r}
 counties_sf$cases_category <- cut(counties_sf$daySince, breaks=c(-Inf, 30, 60, Inf), labels = c("High", "Med", "Low"))
 ```
 
-##Categorize days since last death into Low, Med, or High
+## Categorize days since last death into Low, Med, or High
 ```{r}
 counties_sf$deaths_category <- cut(counties_sf$daySince_rdnew, breaks=c(-Inf, 30, 60, Inf), labels = c("High", "Med", "Low"))
 deaths_category <- cut(counties_sf$daySince_rdnew, breaks=c(-Inf, 30, 60, Inf), labels = c("High", "Med", "Low"))

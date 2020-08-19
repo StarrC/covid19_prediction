@@ -5,7 +5,7 @@ output:
     df_print: paged
 ---
 
-##Load the R Libraries
+## Load theLibraries
 ```{r}
 library(tidyr)
 library(dplyr)
@@ -22,7 +22,7 @@ library(mlbench)
 library(caret)
 ```
 
-#Merge census data with JHU data
+## Merge census data with JHU data
 ```{r}
 usfacts_data <- read.csv("census_data_0718.csv")
 cases <- counties_sf
@@ -36,7 +36,7 @@ cases_new <- cases_new %>% mutate_if(is.character, factor)
 dim(cases_new)
 ```
 
-#Select Variables
+## Select Variables
 ```{r}
 deaths_sel <- cases_new %>% select(county_name.x, state, total_pop, pop_density,        
   male_pop, female_pop, median_age, white_pop, 
@@ -48,7 +48,7 @@ summary(deaths_sel)
 
 ```
 
-#Normalize by population
+## Normalize by population
 ```{r}
 deaths_sel <- deaths_sel %>% mutate(
   female_pop = female_pop / total_pop,
@@ -70,7 +70,7 @@ table(complete.cases(deaths_sel))
 ```
 
 
-##Focus on states with Covid-19 outbreaks
+## Focus on states with Covid-19 outbreaks
 ```{r}
 deaths_sel %>% pull(deaths_category) %>% table()
 ```
@@ -104,7 +104,7 @@ counties_deaths <- counties_deaths %>%
 counties_deaths
 ```
 
-##Add Variables to Map Data
+## Add Variables to Map Data
 ```{r}
 deaths_all <- counties_deaths %>% left_join(deaths_train %>% 
     mutate(county = county_name.x %>% str_to_lower() %>% 
@@ -136,12 +136,12 @@ ggplot(deaths_weight,
 ```
 
 
-#Get the 5 best features: 
+## Get the 5 best features: 
 ```{r}
 subset_tx <- cutoff.k(deaths_weight %>% column_to_rownames("feature"), 5)
 subset_tx
 ```
-#Univariate importance scores
+## Univariate importance scores
 
 ```{r}
 library(rpart)
@@ -153,7 +153,7 @@ deaths_train %>% gain.ratio(deaths_category ~ ., data = .) %>%
 ```
 
 
-## Build a Model
+## Build a Model - Decision Tree 
 ```{r}
 library(caret)
 fit_deaths <- deaths_train %>%
@@ -173,6 +173,7 @@ library(rpart.plot)
 rpart.plot(fit_deaths$finalModel, extra = 2)
 varImp(fit_deaths)
 ```
+
 ##Build a Model - C.45
 ```{r}
 C45fit_deaths <- deaths_train %>%
@@ -209,9 +210,9 @@ plot(ctreeFit_deaths$finalModel)
 predict(ctreeFit_deaths, head(cases_train))
 ```
 
-##Build a Model - PART
-#Remove county name since it has too many levels which will make the code really slow
+## Build a Model - PART
 ```{r}
+#Remove county name since it has too many levels which will make the code really slow
 rulesfit_deaths <- deaths_train %>%
 train(deaths_category ~ . - county_name.x - state - total_pop,
     data = . ,
@@ -267,7 +268,7 @@ resamps
 summary(resamps)
 ```
 
-## Use model from hard hit states for all of US
+## Use Random Forest Classification Model to Predict Deaths Risk for all of US
 ```{r}
 deaths_pred <- na.omit(deaths_sel)
 deaths_pred$deaths_category <- predict(randomForestFit_deaths, deaths_pred)
@@ -276,8 +277,15 @@ deaths_pred <- counties_deaths %>% left_join(deaths_pred %>%
         str_replace('\\s+county\\s*$', '')))
 ```
 
+
+## Plot the Prediction Results for US
 ```{r}
 ggplot(deaths_pred, aes(long, lat)) + 
   geom_polygon(aes(group = group, fill = deaths_category)) + 
     coord_quickmap()
+```
+
+## Generate csv file for Prediction Results
+```{r}
+write.csv(deaths_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/R/covid19_prediction/deaths_predictor_rules.csv")
 ```
