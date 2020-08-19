@@ -1,11 +1,8 @@
 ---
 title: "COVID-19 Cases Model"
-author: "Starr Corbin"
-date: "7/24/2020"
-output:
-  html_document: default
-  word_document: default
 ---
+
+##Load the R Libraries
 ```{r}
 library(tidyr)
 library(dplyr)

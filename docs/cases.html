@@ -9,7 +9,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Starr Corbin" />
 
 
 <title>COVID-19 Cases Model</title>
@@ -276,7 +275,13 @@ $(document).ready(function () {
   <a href="index.html">Home</a>
 </li>
 <li>
-  <a href="covid-19-prediction.html">COVID-19 Prediction</a>
+  <a href="peak.html">COVID-19 Peak Cases</a>
+</li>
+<li>
+  <a href="deaths.html">COVID-19 Deaths Model</a>
+</li>
+<li>
+  <a href="cases.html">COVID-19 Cases Model</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -291,12 +296,11 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">COVID-19 Cases Model</h1>
-<h4 class="author">Starr Corbin</h4>
-<h4 class="date">7/24/2020</h4>
 
 </div>
 
 
+<p>##Load the R Libraries</p>
 <pre class="r"><code>library(tidyr)
 library(dplyr)
 library(stringr)
@@ -317,12 +321,12 @@ pop_density &lt;- read.csv(&quot;USA_Population_Density.csv&quot;)
 names(cases)[7] &lt;- &quot;county_fips_code&quot;
 cases_new &lt;- merge(usfacts_data, cases, by=&quot;county_fips_code&quot;)
 dim(cases_new)</code></pre>
-<pre><code>## [1] 3142  287</code></pre>
+<pre><code>## [1] 3142  288</code></pre>
 <pre class="r"><code>cases_new &lt;- merge(cases_new, pop_density, by=&quot;county_fips_code&quot;)
 #Make characters factor for analysis
 cases_new &lt;- cases_new %&gt;% mutate_if(is.character, factor)
 dim(cases_new)</code></pre>
-<pre><code>## [1] 3140  293</code></pre>
+<pre><code>## [1] 3140  294</code></pre>
 <p>#Select Variables</p>
 <pre class="r"><code>cases_sel &lt;- cases_new %&gt;% select(county_name.x, state,total_pop, pop_density,       
   male_pop, female_pop, median_age, white_pop, 
@@ -331,21 +335,29 @@ dim(cases_new)</code></pre>
   employed_pop, unemployed_pop, cases_category)
 
 summary(cases_sel)</code></pre>
-<pre><code>##            county_name.x      state        total_pop         pop_density         male_pop         female_pop        median_age      white_pop         black_pop        
-##  Washington County:  30   TX     : 254   Min.   :      74   Min.   :    0.0   Min.   :     39   Min.   :     35   Min.   :21.60   Min.   :     18   Min.   :      0.0  
-##  Jefferson County :  25   GA     : 159   1st Qu.:   10952   1st Qu.:   17.1   1st Qu.:   5518   1st Qu.:   5464   1st Qu.:37.90   1st Qu.:   8112   1st Qu.:     95.0  
-##  Franklin County  :  24   VA     : 133   Median :   25704   Median :   45.5   Median :  12808   Median :  12887   Median :41.20   Median :  20215   Median :    761.5  
-##  Lincoln County   :  23   KY     : 120   Mean   :  102224   Mean   :  262.8   Mean   :  50321   Mean   :  51903   Mean   :41.16   Mean   :  62827   Mean   :  12562.2  
-##  Jackson County   :  22   MO     : 115   3rd Qu.:   67501   3rd Qu.:  115.6   3rd Qu.:  33510   3rd Qu.:  34114   3rd Qu.:44.23   3rd Qu.:  53551   3rd Qu.:   5397.5  
-##  Madison County   :  19   KS     : 105   Max.   :10105722   Max.   :70148.7   Max.   :4979641   Max.   :5126081   Max.   :66.40   Max.   :2676982   Max.   :1226134.0  
-##  (Other)          :2997   (Other):2254                                                                                                                                 
-##    asian_pop          hispanic_pop     amerindian_pop    commuters_by_public_transportation median_income     employed_pop     unemployed_pop   cases_category
-##  Min.   :      0.0   Min.   :      0   Min.   :    0.0   Min.   :     0.0                   Min.   : 19264   Min.   :     39   Min.   :     0   High:1842     
-##  1st Qu.:     31.0   1st Qu.:    323   1st Qu.:   24.0   1st Qu.:     6.0                   1st Qu.: 41126   1st Qu.:   4555   1st Qu.:   286   Med : 544     
-##  Median :    138.5   Median :   1028   Median :   95.0   Median :    33.0                   Median : 48073   Median :  10710   Median :   745   Low : 754     
-##  Mean   :   5410.7   Mean   :  17997   Mean   :  662.0   Mean   :  2422.9                   Mean   : 49765   Mean   :  47960   Mean   :  3363                 
-##  3rd Qu.:    713.8   3rd Qu.:   4874   3rd Qu.:  347.2   3rd Qu.:   145.2                   3rd Qu.: 55771   3rd Qu.:  29548   3rd Qu.:  2102                 
-##  Max.   :1442577.0   Max.   :4893579   Max.   :64102.0   Max.   :735534.0                   Max.   :129588   Max.   :4805817   Max.   :406426                 
+<pre><code>##            county_name.x      state        total_pop         pop_density         male_pop         female_pop     
+##  Washington County:  30   TX     : 254   Min.   :      74   Min.   :    0.0   Min.   :     39   Min.   :     35  
+##  Jefferson County :  25   GA     : 159   1st Qu.:   10952   1st Qu.:   17.1   1st Qu.:   5518   1st Qu.:   5464  
+##  Franklin County  :  24   VA     : 133   Median :   25704   Median :   45.5   Median :  12808   Median :  12887  
+##  Lincoln County   :  23   KY     : 120   Mean   :  102224   Mean   :  262.8   Mean   :  50321   Mean   :  51903  
+##  Jackson County   :  22   MO     : 115   3rd Qu.:   67501   3rd Qu.:  115.6   3rd Qu.:  33510   3rd Qu.:  34114  
+##  Madison County   :  19   KS     : 105   Max.   :10105722   Max.   :70148.7   Max.   :4979641   Max.   :5126081  
+##  (Other)          :2997   (Other):2254                                                                           
+##    median_age      white_pop         black_pop           asian_pop          hispanic_pop     amerindian_pop   
+##  Min.   :21.60   Min.   :     18   Min.   :      0.0   Min.   :      0.0   Min.   :      0   Min.   :    0.0  
+##  1st Qu.:37.90   1st Qu.:   8112   1st Qu.:     95.0   1st Qu.:     31.0   1st Qu.:    323   1st Qu.:   24.0  
+##  Median :41.20   Median :  20215   Median :    761.5   Median :    138.5   Median :   1028   Median :   95.0  
+##  Mean   :41.16   Mean   :  62827   Mean   :  12562.2   Mean   :   5410.7   Mean   :  17997   Mean   :  662.0  
+##  3rd Qu.:44.23   3rd Qu.:  53551   3rd Qu.:   5397.5   3rd Qu.:    713.8   3rd Qu.:   4874   3rd Qu.:  347.2  
+##  Max.   :66.40   Max.   :2676982   Max.   :1226134.0   Max.   :1442577.0   Max.   :4893579   Max.   :64102.0  
+##                                                                                                               
+##  commuters_by_public_transportation median_income     employed_pop     unemployed_pop   cases_category
+##  Min.   :     0.0                   Min.   : 19264   Min.   :     39   Min.   :     0   High:2056     
+##  1st Qu.:     6.0                   1st Qu.: 41126   1st Qu.:   4555   1st Qu.:   286   Med : 313     
+##  Median :    33.0                   Median : 48073   Median :  10710   Median :   745   Low : 771     
+##  Mean   :  2422.9                   Mean   : 49765   Mean   :  47960   Mean   :  3363                 
+##  3rd Qu.:   145.2                   3rd Qu.: 55771   3rd Qu.:  29548   3rd Qu.:  2102                 
+##  Max.   :735534.0                   Max.   :129588   Max.   :4805817   Max.   :406426                 
 ## </code></pre>
 <pre class="r"><code>table(complete.cases(cases_sel))</code></pre>
 <pre><code>## 
@@ -366,27 +378,35 @@ summary(cases_sel)</code></pre>
   )
 
 summary(cases_sel)</code></pre>
-<pre><code>##            county_name.x      state        total_pop         pop_density         male_pop        female_pop       median_age      white_pop          black_pop       
-##  Washington County:  30   TX     : 254   Min.   :      74   Min.   :    0.0   Min.   :0.4190   Min.   :0.1917   Min.   :21.60   Min.   :0.006354   Min.   :0.000000  
-##  Jefferson County :  25   GA     : 159   1st Qu.:   10952   1st Qu.:   17.1   1st Qu.:0.4890   1st Qu.:0.4942   1st Qu.:37.90   1st Qu.:0.651267   1st Qu.:0.006043  
-##  Franklin County  :  24   VA     : 133   Median :   25704   Median :   45.5   Median :0.4960   Median :0.5040   Median :41.20   Median :0.842359   Median :0.021296  
-##  Lincoln County   :  23   KY     : 120   Mean   :  102224   Mean   :  262.8   Mean   :0.5008   Mean   :0.4992   Mean   :41.16   Mean   :0.768057   Mean   :0.089016  
-##  Jackson County   :  22   MO     : 115   3rd Qu.:   67501   3rd Qu.:  115.6   3rd Qu.:0.5058   3rd Qu.:0.5110   3rd Qu.:44.23   3rd Qu.:0.929511   3rd Qu.:0.098830  
-##  Madison County   :  19   KS     : 105   Max.   :10105722   Max.   :70148.7   Max.   :0.8083   Max.   :0.5810   Max.   :66.40   Max.   :1.000000   Max.   :0.869207  
-##  (Other)          :2997   (Other):2254                                                                                                                               
-##    asian_pop         hispanic_pop     amerindian_pop     commuters_by_public_transportation median_income     employed_pop    unemployed_pop    cases_category
-##  Min.   :0.000000   Min.   :0.00000   Min.   :0.000000   Min.   :0.0000000                  Min.   : 19264   Min.   :0.1017   Min.   :0.00000   High:1842     
-##  1st Qu.:0.002710   1st Qu.:0.02053   1st Qu.:0.001221   1st Qu.:0.0004087                  1st Qu.: 41126   1st Qu.:0.3960   1st Qu.:0.02152   Med : 544     
-##  Median :0.005766   Median :0.03982   Median :0.002704   Median :0.0013915                  Median : 48073   Median :0.4429   Median :0.02822   Low : 754     
-##  Mean   :0.013209   Mean   :0.09125   Mean   :0.017563   Mean   :0.0043925                  Mean   : 49765   Mean   :0.4384   Mean   :0.02877                 
-##  3rd Qu.:0.012262   3rd Qu.:0.09289   3rd Qu.:0.006359   3rd Qu.:0.0032615                  3rd Qu.: 55771   3rd Qu.:0.4861   3rd Qu.:0.03494                 
-##  Max.   :0.418079   Max.   :0.99185   Max.   :0.822237   Max.   :0.3194996                  Max.   :129588   Max.   :0.7326   Max.   :0.12619                 
+<pre><code>##            county_name.x      state        total_pop         pop_density         male_pop        female_pop    
+##  Washington County:  30   TX     : 254   Min.   :      74   Min.   :    0.0   Min.   :0.4190   Min.   :0.1917  
+##  Jefferson County :  25   GA     : 159   1st Qu.:   10952   1st Qu.:   17.1   1st Qu.:0.4890   1st Qu.:0.4942  
+##  Franklin County  :  24   VA     : 133   Median :   25704   Median :   45.5   Median :0.4960   Median :0.5040  
+##  Lincoln County   :  23   KY     : 120   Mean   :  102224   Mean   :  262.8   Mean   :0.5008   Mean   :0.4992  
+##  Jackson County   :  22   MO     : 115   3rd Qu.:   67501   3rd Qu.:  115.6   3rd Qu.:0.5058   3rd Qu.:0.5110  
+##  Madison County   :  19   KS     : 105   Max.   :10105722   Max.   :70148.7   Max.   :0.8083   Max.   :0.5810  
+##  (Other)          :2997   (Other):2254                                                                         
+##    median_age      white_pop          black_pop          asian_pop         hispanic_pop     amerindian_pop    
+##  Min.   :21.60   Min.   :0.006354   Min.   :0.000000   Min.   :0.000000   Min.   :0.00000   Min.   :0.000000  
+##  1st Qu.:37.90   1st Qu.:0.651267   1st Qu.:0.006043   1st Qu.:0.002710   1st Qu.:0.02053   1st Qu.:0.001221  
+##  Median :41.20   Median :0.842359   Median :0.021296   Median :0.005766   Median :0.03982   Median :0.002704  
+##  Mean   :41.16   Mean   :0.768057   Mean   :0.089016   Mean   :0.013209   Mean   :0.09125   Mean   :0.017563  
+##  3rd Qu.:44.23   3rd Qu.:0.929511   3rd Qu.:0.098830   3rd Qu.:0.012262   3rd Qu.:0.09289   3rd Qu.:0.006359  
+##  Max.   :66.40   Max.   :1.000000   Max.   :0.869207   Max.   :0.418079   Max.   :0.99185   Max.   :0.822237  
+##                                                                                                               
+##  commuters_by_public_transportation median_income     employed_pop    unemployed_pop    cases_category
+##  Min.   :0.0000000                  Min.   : 19264   Min.   :0.1017   Min.   :0.00000   High:2056     
+##  1st Qu.:0.0004087                  1st Qu.: 41126   1st Qu.:0.3960   1st Qu.:0.02152   Med : 313     
+##  Median :0.0013915                  Median : 48073   Median :0.4429   Median :0.02822   Low : 771     
+##  Mean   :0.0043925                  Mean   : 49765   Mean   :0.4384   Mean   :0.02877                 
+##  3rd Qu.:0.0032615                  3rd Qu.: 55771   3rd Qu.:0.4861   3rd Qu.:0.03494                 
+##  Max.   :0.3194996                  Max.   :129588   Max.   :0.7326   Max.   :0.12619                 
 ## </code></pre>
 <p>##Focus on states with Covid-19 outbreaks</p>
 <pre class="r"><code>cases_sel %&gt;% pull(cases_category) %&gt;% table()</code></pre>
 <pre><code>## .
 ## High  Med  Low 
-## 1842  544  754</code></pre>
+## 2056  313  771</code></pre>
 <div id="filter-hard-hit-states---cases" class="section level2">
 <h2>Filter Hard Hit States - Cases</h2>
 <pre class="r"><code>cases_sel %&gt;% group_by(state) %&gt;% 
@@ -396,16 +416,16 @@ summary(cases_sel)</code></pre>
 <pre><code>## # A tibble: 51 x 2
 ##    state high_pct
 ##    &lt;fct&gt;    &lt;dbl&gt;
-##  1 TN       0.853
-##  2 WI       0.833
-##  3 MO       0.826
-##  4 CA       0.810
-##  5 MS       0.780
-##  6 OK       0.766
-##  7 KY       0.75 
-##  8 ID       0.727
-##  9 WA       0.718
-## 10 SC       0.717
+##  1 SC       0.913
+##  2 FL       0.910
+##  3 TN       0.884
+##  4 OK       0.857
+##  5 CA       0.845
+##  6 MS       0.829
+##  7 MO       0.826
+##  8 WI       0.819
+##  9 KY       0.817
+## 10 GA       0.805
 ## # ... with 41 more rows</code></pre>
 </div>
 <div id="designate-states-to-use-for-training-model" class="section level2">
@@ -419,7 +439,7 @@ summary(cases_sel)</code></pre>
 cases_train %&gt;% pull(cases_category) %&gt;% table()</code></pre>
 <pre><code>## .
 ## High  Med  Low 
-##   85   24   57</code></pre>
+##   96    8   62</code></pre>
 </div>
 <div id="plot-map" class="section level2">
 <h2>Plot Map</h2>
@@ -451,7 +471,7 @@ counties  </code></pre>
 <pre class="r"><code>ggplot(counties_all, aes(long, lat)) + 
   geom_polygon(aes(group = group, fill = cases_category)) + 
     coord_quickmap() </code></pre>
-<p><img src="cases-model_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="cases_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 </div>
 <div id="check-variable-importance" class="section level2">
 <h2>Check Variable Importance</h2>
@@ -464,29 +484,29 @@ cases_weight</code></pre>
 <pre><code>## # A tibble: 13 x 2
 ##    feature                            attr_importance
 ##    &lt;chr&gt;                                        &lt;dbl&gt;
-##  1 white_pop                                    0.479
-##  2 employed_pop                                 0.409
-##  3 black_pop                                    0.378
-##  4 median_income                                0.371
-##  5 unemployed_pop                               0.344
-##  6 commuters_by_public_transportation           0.325
-##  7 pop_density                                  0    
-##  8 male_pop                                     0    
-##  9 female_pop                                   0    
-## 10 median_age                                   0    
-## 11 asian_pop                                    0    
-## 12 hispanic_pop                                 0    
-## 13 amerindian_pop                               0</code></pre>
+##  1 white_pop                                    0.540
+##  2 black_pop                                    0.378
+##  3 employed_pop                                 0.366
+##  4 hispanic_pop                                 0.331
+##  5 pop_density                                  0    
+##  6 male_pop                                     0    
+##  7 female_pop                                   0    
+##  8 median_age                                   0    
+##  9 asian_pop                                    0    
+## 10 amerindian_pop                               0    
+## 11 commuters_by_public_transportation           0    
+## 12 median_income                                0    
+## 13 unemployed_pop                               0</code></pre>
 <p>#Plot the importance in descending order</p>
 <pre class="r"><code>ggplot(cases_weight,
   aes(x = attr_importance, y = reorder(feature, attr_importance))) +
   geom_bar(stat = &quot;identity&quot;) +
   xlab(&quot;Importance score&quot;) + ylab(&quot;Feature&quot;)</code></pre>
-<p><img src="cases-model_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="cases_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 <p>#Get the 5 best features:</p>
 <pre class="r"><code>subset_tx &lt;- cutoff.k(cases_weight %&gt;% column_to_rownames(&quot;feature&quot;), 5)
 subset_tx</code></pre>
-<pre><code>## [1] &quot;white_pop&quot;      &quot;employed_pop&quot;   &quot;black_pop&quot;      &quot;median_income&quot;  &quot;unemployed_pop&quot;</code></pre>
+<pre><code>## [1] &quot;white_pop&quot;    &quot;black_pop&quot;    &quot;employed_pop&quot; &quot;hispanic_pop&quot; &quot;pop_density&quot;</code></pre>
 <p>#Univariate importance scores</p>
 <pre class="r"><code>library(rpart)
 library(rpart.plot)
@@ -497,22 +517,22 @@ cases_train %&gt;% gain.ratio(cases_category ~ ., data = .) %&gt;%
 <pre><code>## # A tibble: 16 x 2
 ##    feature                            attr_importance
 ##    &lt;chr&gt;                                        &lt;dbl&gt;
-##  1 state                                        0.384
-##  2 county_name.x                                0.191
-##  3 white_pop                                    0.182
-##  4 black_pop                                    0.153
-##  5 employed_pop                                 0.129
-##  6 commuters_by_public_transportation           0.124
-##  7 median_income                                0.119
-##  8 unemployed_pop                               0.101
-##  9 total_pop                                    0    
-## 10 pop_density                                  0    
-## 11 male_pop                                     0    
-## 12 female_pop                                   0    
-## 13 median_age                                   0    
-## 14 asian_pop                                    0    
-## 15 hispanic_pop                                 0    
-## 16 amerindian_pop                               0</code></pre>
+##  1 state                                        0.360
+##  2 white_pop                                    0.246
+##  3 county_name.x                                0.160
+##  4 black_pop                                    0.147
+##  5 hispanic_pop                                 0.113
+##  6 employed_pop                                 0.104
+##  7 total_pop                                    0    
+##  8 pop_density                                  0    
+##  9 male_pop                                     0    
+## 10 female_pop                                   0    
+## 11 median_age                                   0    
+## 12 asian_pop                                    0    
+## 13 amerindian_pop                               0    
+## 14 commuters_by_public_transportation           0    
+## 15 median_income                                0    
+## 16 unemployed_pop                               0</code></pre>
 </div>
 <div id="build-a-model---decision-tree" class="section level2">
 <h2>Build a Model - Decision Tree</h2>
@@ -532,36 +552,36 @@ fit_cases &lt;- cases_train %&gt;%
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 149, 150, 149, 149, 149, ... 
+## Summary of sample sizes: 149, 149, 149, 150, 149, 149, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   cp          Accuracy   Kappa     
-##   0.07407407  0.6463235  0.36960200
-##   0.09876543  0.6154412  0.31274530
-##   0.29629630  0.5062500  0.05118111
+##   0.02142857  0.7290441  0.45789867
+##   0.10714286  0.6808824  0.37221647
+##   0.41428571  0.6014706  0.07499324
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final value used for the model was cp = 0.07407407.</code></pre>
+## The final value used for the model was cp = 0.02142857.</code></pre>
 <pre class="r"><code>library(rpart.plot)
 rpart.plot(fit_cases$finalModel, extra = 2)</code></pre>
-<p><img src="cases-model_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="cases_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <pre class="r"><code>varImp(fit_cases)</code></pre>
 <pre><code>## rpart variable importance
 ## 
 ##                                    Overall
-## employed_pop                        100.00
-## white_pop                            96.50
-## amerindian_pop                       93.35
-## black_pop                            76.91
-## commuters_by_public_transportation   69.60
-## pop_density                          54.92
-## median_income                        52.71
+## white_pop                           100.00
+## hispanic_pop                         59.54
+## employed_pop                         51.59
+## commuters_by_public_transportation   45.27
+## asian_pop                            40.12
+## black_pop                            38.54
+## median_income                        26.04
+## pop_density                          25.80
+## male_pop                             23.77
+## female_pop                           23.77
+## amerindian_pop                       15.57
 ## median_age                            0.00
-## asian_pop                             0.00
-## female_pop                            0.00
-## hispanic_pop                          0.00
-## unemployed_pop                        0.00
-## male_pop                              0.00</code></pre>
+## unemployed_pop                        0.00</code></pre>
 </div>
 <div id="build-a-model---conditional-inference-tree" class="section level2">
 <h2>Build a Model - Conditional Inference Tree</h2>
@@ -580,18 +600,18 @@ ctreeFit_cases</code></pre>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 150, 149, 151, 150, 148, ... 
+## Summary of sample sizes: 149, 150, 151, 149, 149, 149, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   mincriterion  Accuracy   Kappa    
-##   0.01          0.5656291  0.2285521
-##   0.50          0.6322141  0.3256537
-##   0.99          0.6079085  0.3135511
+##   0.01          0.7343137  0.4721044
+##   0.50          0.7519608  0.5101738
+##   0.99          0.7162990  0.4657455
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
 ## The final value used for the model was mincriterion = 0.5.</code></pre>
 <pre class="r"><code>plot(ctreeFit_cases$finalModel)</code></pre>
-<p><img src="cases-model_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><img src="cases_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
 <pre class="r"><code>predict(ctreeFit_cases, head(cases_train))</code></pre>
 <pre><code>## [1] Low  High High High High High
 ## Levels: High Med Low</code></pre>
@@ -611,62 +631,40 @@ C45fit_cases</code></pre>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 150, 149, 149, 150, 149, ... 
+## Summary of sample sizes: 148, 151, 150, 150, 150, 149, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   C      M  Accuracy   Kappa    
-##   0.010  1  0.6126634  0.3219241
-##   0.010  2  0.6192402  0.3284091
-##   0.010  3  0.6251225  0.3233835
-##   0.255  1  0.6196078  0.3359290
-##   0.255  2  0.6130310  0.3415600
-##   0.255  3  0.6203023  0.3375912
-##   0.500  1  0.6314134  0.3622477
-##   0.500  2  0.6192810  0.3543805
-##   0.500  3  0.6140523  0.3274325
+##   0.010  1  0.7725245  0.5500880
+##   0.010  2  0.7850245  0.5815871
+##   0.010  3  0.7850245  0.5815871
+##   0.255  1  0.7287255  0.4583557
+##   0.255  2  0.7280310  0.4692606
+##   0.255  3  0.7475245  0.5055811
+##   0.500  1  0.7287255  0.4583557
+##   0.500  2  0.7280310  0.4692606
+##   0.500  3  0.7475245  0.5055811
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final values used for the model were C = 0.5 and M = 1.</code></pre>
+## The final values used for the model were C = 0.01 and M = 2.</code></pre>
 <pre class="r"><code>C45fit_cases$finalModel</code></pre>
 <pre><code>## J48 pruned tree
 ## ------------------
 ## 
-## white_pop &lt;= 0.792661
-## |   commuters_by_public_transportation &lt;= 0.013532
-## |   |   employed_pop &lt;= 0.332063
-## |   |   |   black_pop &lt;= 0.051724: Low (3.0)
-## |   |   |   black_pop &gt; 0.051724
-## |   |   |   |   male_pop &lt;= 0.538864: High (1.0)
-## |   |   |   |   male_pop &gt; 0.538864: Med (2.0)
-## |   |   employed_pop &gt; 0.332063: High (78.0/15.0)
-## |   commuters_by_public_transportation &gt; 0.013532
-## |   |   black_pop &lt;= 0.08605
-## |   |   |   white_pop &lt;= 0.666508
-## |   |   |   |   white_pop &lt;= 0.295051: Med (1.0)
-## |   |   |   |   white_pop &gt; 0.295051: High (8.0)
-## |   |   |   white_pop &gt; 0.666508
-## |   |   |   |   male_pop &lt;= 0.490209: Med (1.0)
-## |   |   |   |   male_pop &gt; 0.490209: Low (2.0)
-## |   |   black_pop &gt; 0.08605
-## |   |   |   asian_pop &lt;= 0.251313: Low (15.0)
-## |   |   |   asian_pop &gt; 0.251313: High (1.0)
-## white_pop &gt; 0.792661
-## |   black_pop &lt;= 0.010904
-## |   |   pop_density &lt;= 56.7: High (9.0/1.0)
-## |   |   pop_density &gt; 56.7
-## |   |   |   pop_density &lt;= 99.9: Low (3.0)
-## |   |   |   pop_density &gt; 99.9
-## |   |   |   |   pop_density &lt;= 115.3: High (1.0)
-## |   |   |   |   pop_density &gt; 115.3: Med (1.0)
-## |   black_pop &gt; 0.010904
-## |   |   median_income &lt;= 45332
-## |   |   |   pop_density &lt;= 123.2: High (1.0)
-## |   |   |   pop_density &gt; 123.2: Med (2.0)
-## |   |   median_income &gt; 45332: Low (37.0/4.0)
+## white_pop &lt;= 0.808271
+## |   commuters_by_public_transportation &lt;= 0.007707: High (79.0/8.0)
+## |   commuters_by_public_transportation &gt; 0.007707
+## |   |   male_pop &lt;= 0.486781: Low (12.0)
+## |   |   male_pop &gt; 0.486781
+## |   |   |   hispanic_pop &lt;= 0.197377
+## |   |   |   |   commuters_by_public_transportation &lt;= 0.042769: Low (9.0)
+## |   |   |   |   commuters_by_public_transportation &gt; 0.042769: High (2.0)
+## |   |   |   hispanic_pop &gt; 0.197377: High (14.0)
+## white_pop &gt; 0.808271: Low (50.0/12.0)
 ## 
-## Number of Leaves  :  17
+## Number of Leaves  :  6
 ## 
-## Size of the tree :   33</code></pre>
+## Size of the tree :   11</code></pre>
 <p>##Build a Model - PART</p>
 <pre class="r"><code>#Remove county name since it has too many levels which will make the code really slow
 rulesfit_cases &lt;- cases_train %&gt;%
@@ -684,45 +682,66 @@ rulesfit_cases</code></pre>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 149, 149, 148, 151, 149, ... 
+## Summary of sample sizes: 149, 150, 149, 149, 148, 149, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   threshold  pruned  Accuracy   Kappa    
-##   0.010      yes     0.6017320  0.3097434
-##   0.010      no      0.6168791  0.3552093
-##   0.255      yes     0.6208170  0.3387355
-##   0.255      no      0.6168791  0.3552093
-##   0.500      yes     0.6208170  0.3387355
-##   0.500      no      0.6168791  0.3552093
+##   0.010      yes     0.7348938  0.4727079
+##   0.010      no      0.7396160  0.4946752
+##   0.255      yes     0.7286438  0.4701587
+##   0.255      no      0.7396160  0.4946752
+##   0.500      yes     0.7286438  0.4701587
+##   0.500      no      0.7396160  0.4946752
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final values used for the model were threshold = 0.5 and pruned = yes.</code></pre>
+## The final values used for the model were threshold = 0.5 and pruned = no.</code></pre>
 <pre class="r"><code>rulesfit_cases$finalModel</code></pre>
 <pre><code>## PART decision list
 ## ------------------
 ## 
-## white_pop &gt; 0.792661 AND
-## black_pop &gt; 0.010904 AND
-## median_income &gt; 45332: Low (37.0/4.0)
+## white_pop &lt;= 0.808271 AND
+## commuters_by_public_transportation &lt;= 0.007707 AND
+## amerindian_pop &lt;= 0.032607 AND
+## employed_pop &gt; 0.36469: High (62.0/1.0)
 ## 
-## commuters_by_public_transportation &lt;= 0.013532 AND
-## employed_pop &gt; 0.332063 AND
-## white_pop &lt;= 0.947953: High (89.0/19.0)
+## white_pop &gt; 0.511566 AND
+## hispanic_pop &lt;= 0.248929 AND
+## median_age &lt;= 44.9 AND
+## commuters_by_public_transportation &lt;= 0.004988 AND
+## pop_density &lt;= 124.8 AND
+## median_age &gt; 37.1: Low (23.0/1.0)
 ## 
-## male_pop &lt;= 0.486781: Low (13.0)
+## employed_pop &gt; 0.36469 AND
+## hispanic_pop &gt; 0.197377 AND
+## commuters_by_public_transportation &lt;= 0.108764: High (15.0)
 ## 
-## male_pop &lt;= 0.552539 AND
-## asian_pop &lt;= 0.102878 AND
-## male_pop &lt;= 0.50093: Low (8.0/1.0)
+## commuters_by_public_transportation &gt; 0.006169 AND
+## median_income &lt;= 92838: Low (26.0)
 ## 
-## male_pop &lt;= 0.536241 AND
-## hispanic_pop &lt;= 0.449549: High (13.0)
+## median_age &gt; 41 AND
+## employed_pop &lt;= 0.363092 AND
+## asian_pop &lt;= 0.012193: High (5.0)
 ## 
-## black_pop &lt;= 0.050865: Low (3.0)
+## median_age &gt; 41 AND
+## employed_pop &gt; 0.363092 AND
+## male_pop &lt;= 0.505049 AND
+## employed_pop &lt;= 0.472529 AND
+## male_pop &gt; 0.492809: High (6.0)
 ## 
-## : Med (3.0)
+## median_age &gt; 41 AND
+## employed_pop &gt; 0.363092: Low (14.0/2.0)
 ## 
-## Number of Rules  :   7</code></pre>
+## median_income &lt;= 52082 AND
+## commuters_by_public_transportation &gt; 0.002066 AND
+## pop_density &gt; 46.9: Med (5.0)
+## 
+## median_income &gt; 51385: High (4.0)
+## 
+## male_pop &lt;= 0.51699: Med (3.0/1.0)
+## 
+## : Low (3.0/1.0)
+## 
+## Number of Rules  :   11</code></pre>
 </div>
 <div id="build-a-model---random-forest-fit" class="section level2">
 <h2>Build a Model - Random Forest Fit</h2>
@@ -741,13 +760,13 @@ randomForestFit_cases</code></pre>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 150, 150, 150, 149, 148, ... 
+## Summary of sample sizes: 150, 150, 148, 149, 149, 150, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa    
-##    2    0.7248366  0.5032928
-##    7    0.7296977  0.5244395
-##   13    0.6873775  0.4611957
+##    2    0.8058578  0.6128329
+##    7    0.8069199  0.6221763
+##   13    0.7649673  0.5391780
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
 ## The final value used for the model was mtry = 7.</code></pre>
@@ -769,40 +788,40 @@ nnetFit_case</code></pre>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 150, 149, 148, 149, 148, 149, ... 
+## Summary of sample sizes: 150, 149, 149, 150, 151, 149, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   size  decay  Accuracy   Kappa     
-##   1     0e+00  0.5129167  0.00000000
-##   1     1e-04  0.5129167  0.00000000
-##   1     1e-03  0.5246814  0.03205196
-##   1     1e-02  0.5195833  0.01666667
-##   1     1e-01  0.5073611  0.01576782
-##   3     0e+00  0.5195833  0.01666667
-##   3     1e-04  0.5312990  0.04772182
-##   3     1e-03  0.5309314  0.04799104
-##   3     1e-02  0.5086111  0.05415008
-##   3     1e-01  0.5633824  0.12183014
-##   5     0e+00  0.5191667  0.01724138
-##   5     1e-04  0.5250490  0.03162987
-##   5     1e-03  0.5862663  0.16943323
-##   5     1e-02  0.5938235  0.20991511
-##   5     1e-01  0.5787663  0.19206164
-##   7     0e+00  0.5317157  0.04616611
-##   7     1e-04  0.5309314  0.05469874
-##   7     1e-03  0.5394935  0.08265039
-##   7     1e-02  0.6223039  0.25790182
-##   7     1e-01  0.5474265  0.12862419
-##   9     0e+00  0.5250490  0.03316833
-##   9     1e-04  0.5122304  0.05925010
-##   9     1e-03  0.5862255  0.18026091
-##   9     1e-02  0.5163889  0.09142675
-##   9     1e-01  0.5061193  0.06239618
+##   1     0e+00  0.5850817  0.02000000
+##   1     1e-04  0.5788317  0.00000000
+##   1     1e-03  0.6288807  0.13642801
+##   1     1e-02  0.5909641  0.03707317
+##   1     1e-01  0.5972631  0.07062156
+##   3     0e+00  0.5913807  0.03642801
+##   3     1e-04  0.5917484  0.03935484
+##   3     1e-03  0.6636029  0.22214230
+##   3     1e-02  0.6601307  0.21874249
+##   3     1e-01  0.6371160  0.17955872
+##   5     0e+00  0.5913317  0.03652174
+##   5     1e-04  0.5909641  0.03707317
+##   5     1e-03  0.6108660  0.12200959
+##   5     1e-02  0.6735131  0.27051951
+##   5     1e-01  0.6576797  0.23114081
+##   7     0e+00  0.5861928  0.02567250
+##   7     1e-04  0.6222141  0.11707317
+##   7     1e-03  0.6797222  0.29225051
+##   7     1e-02  0.6926307  0.32535186
+##   7     1e-01  0.6236928  0.18611454
+##   9     0e+00  0.5909641  0.03707317
+##   9     1e-04  0.5747958  0.02220072
+##   9     1e-03  0.6672712  0.25350832
+##   9     1e-02  0.7517075  0.46880380
+##   9     1e-01  0.6048775  0.17139854
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final values used for the model were size = 7 and decay = 0.01.</code></pre>
+## The final values used for the model were size = 9 and decay = 0.01.</code></pre>
 <pre class="r"><code>nnetFit_case$finalModel</code></pre>
-<pre><code>## a 13-7-3 network with 122 weights
+<pre><code>## a 13-9-3 network with 156 weights
 ## inputs: pop_density male_pop female_pop median_age white_pop black_pop asian_pop hispanic_pop amerindian_pop commuters_by_public_transportation median_income employed_pop unemployed_pop 
 ## output(s): .outcome 
 ## options were - softmax modelling  decay=0.01</code></pre>
@@ -820,8 +839,8 @@ nnetFit_case</code></pre>
 resamps</code></pre>
 <pre><code>## 
 ## Call:
-## resamples.default(x = list(decision = fit_cases, ctree = ctreeFit_cases, rules = rulesfit_cases, randomForest = randomForestFit_cases, NeuralNet = nnetFit_case, C45fit
-##  = C45fit_cases))
+## resamples.default(x = list(decision = fit_cases, ctree = ctreeFit_cases, rules = rulesfit_cases, randomForest
+##  = randomForestFit_cases, NeuralNet = nnetFit_case, C45fit = C45fit_cases))
 ## 
 ## Models: decision, ctree, rules, randomForest, NeuralNet, C45fit 
 ## Number of resamples: 10 
@@ -837,21 +856,21 @@ resamps</code></pre>
 ## 
 ## Accuracy 
 ##                   Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA&#39;s
-## decision     0.4117647 0.5588235 0.6875000 0.6463235 0.7454044 0.8125000    0
-## ctree        0.5000000 0.5527778 0.6470588 0.6322141 0.6822917 0.7500000    0
-## rules        0.5000000 0.5689338 0.6290850 0.6208170 0.6822917 0.7058824    0
-## randomForest 0.6111111 0.6920956 0.7500000 0.7296977 0.7610294 0.8750000    0
-## NeuralNet    0.5000000 0.5220588 0.6125000 0.6223039 0.6911765 0.8235294    0
-## C45fit       0.4375000 0.5781250 0.6470588 0.6314134 0.7012868 0.7500000    0
+## decision     0.6250000 0.6571691 0.7058824 0.7290441 0.8125000 0.8235294    0
+## ctree        0.6666667 0.7058824 0.7352941 0.7519608 0.8005515 0.8823529    0
+## rules        0.5294118 0.6375000 0.7573529 0.7396160 0.8038194 0.9411765    0
+## randomForest 0.6250000 0.7679739 0.8117647 0.8069199 0.8645833 0.9375000    0
+## NeuralNet    0.5555556 0.6305147 0.7401961 0.7517075 0.8750000 0.9375000    0
+## C45fit       0.6111111 0.7291667 0.8117647 0.7850245 0.8621324 0.8823529    0
 ## 
 ## Kappa 
-##                     Min.    1st Qu.    Median      Mean   3rd Qu.      Max. NA&#39;s
-## decision     -0.03658537 0.22727273 0.4365079 0.3696020 0.5318449 0.6619718    0
-## ctree         0.09933775 0.17033461 0.3480765 0.3256537 0.4130010 0.5675676    0
-## rules         0.12500000 0.27063581 0.3523810 0.3387355 0.4386401 0.5061728    0
-## randomForest  0.31147541 0.48469821 0.5569608 0.5244395 0.5901167 0.7575758    0
-## NeuralNet     0.00000000 0.03597122 0.2015915 0.2579018 0.4464753 0.6909091    0
-## C45fit       -0.03597122 0.27067669 0.4025075 0.3622477 0.4812772 0.5616438    0</code></pre>
+##                   Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA&#39;s
+## decision     0.2661871 0.3037446 0.4055944 0.4578987 0.6402098 0.6546763    0
+## ctree        0.3243243 0.4224416 0.4872505 0.5101738 0.6099553 0.7763158    0
+## rules        0.1438849 0.3009820 0.5413462 0.4946752 0.5914670 0.8866667    0
+## randomForest 0.3513514 0.5259507 0.6189756 0.6221763 0.7316411 0.8620690    0
+## NeuralNet    0.0000000 0.1975977 0.4766900 0.4688038 0.7593985 0.8648649    0
+## C45fit       0.2363636 0.4831064 0.6189756 0.5815871 0.7177419 0.7622378    0</code></pre>
 </div>
 <div id="use-model-from-hard-hit-states-for-all-of-us" class="section level2">
 <h2>Use model from hard hit states for all of US</h2>
@@ -864,7 +883,7 @@ counties_pred &lt;- counties %&gt;% left_join(cases_pred %&gt;%
 <pre class="r"><code>ggplot(counties_pred, aes(long, lat)) + 
   geom_polygon(aes(group = group, fill = cases_category)) + 
     coord_quickmap()</code></pre>
-<p><img src="cases-model_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p><img src="cases_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
 <pre class="r"><code>write.csv(cases_pred, &quot;C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/School/SMU/Data Mining/Project 3/case_predictor_rules.csv&quot;)</code></pre>
 </div>
 
