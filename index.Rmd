@@ -1,9 +1,9 @@
 ---
 title: "Starr Corbin"
 ---
-Starr Corbin's ML and Data Science Projects
+## Starr Corbin's ML and Data Science Projects
 
-Latest Project: COVID-19 Prediction  for U.S. States: High, Medium or Low Risk? 
+## Latest Project: COVID-19 Prediction  for U.S.Counties: High, Medium or Low Risk? 
 
 1. Peak Cases and Deaths page: R Code for creating High, Med, and Low categories for states with peak cases and deaths
 2. Cases Model page: R Code and visual analysis for Case Prediction Model

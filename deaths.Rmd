@@ -174,7 +174,7 @@ rpart.plot(fit_deaths$finalModel, extra = 2)
 varImp(fit_deaths)
 ```
 
-##Build a Model - C.45
+## Build a Model - C.45
 ```{r}
 C45fit_deaths <- deaths_train %>%
 train(deaths_category ~ . - county_name.x - state - total_pop,
@@ -287,5 +287,5 @@ ggplot(deaths_pred, aes(long, lat)) +
 
 ## Generate csv file for Prediction Results
 ```{r}
-write.csv(deaths_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/R/covid19_prediction/deaths_predictor_rules.csv")
+write.csv(deaths_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/R/covid19_prediction/prediction_results/deaths_prediction_results.csv")
 ```

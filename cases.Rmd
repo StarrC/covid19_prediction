@@ -280,5 +280,6 @@ ggplot(counties_pred, aes(long, lat)) +
 
 ## Generate csv file for Prediction Results
 ```{r}
-write.csv(cases_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/R/covid19_prediction/cases_predictor_rules.csv")
+write.csv(cases_pred, "C:/Users/Starr/Google Drive (starr.corbin@gmail.com)/R/covid19_prediction/prediction_results/cases_prediction_results.csv")
+```
 
