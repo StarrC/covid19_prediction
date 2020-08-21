@@ -10,6 +10,9 @@ Variables included:
 - Commuters by Public Transportation
 - Social Distancing Scores
 
+# Final Report
+COVID-19 Cases and Death Prediction - Starr Corbin 081220.pdf
+
 # Data Sources
 - Johns Hopkins University - latest numbers for COVID-19 deaths and cases: https://github.com/CSSEGISandData/COVID-19
 - US Census:https://console.cloud.google.com/marketplace/product/united-states-census-bureau/us-census-data?project=data-mining-project-280712 
